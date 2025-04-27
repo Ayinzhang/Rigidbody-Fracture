@@ -1,0 +1,135 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Rigidbody Fracture\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|e:\\rigidbody fracture\\assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\meshdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\meshdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\rigidbodyfracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\rigidbodyfracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|E:\\Rigidbody Fracture\\assets\\plugins\\openfracture\\runtime\\scripts\\fracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|solutionrelative:assets\\plugins\\openfracture\\runtime\\scripts\\fracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|E:\\Rigidbody Fracture\\assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\fragmenter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|solutionrelative:assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\fragmenter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|E:\\Rigidbody Fracture\\assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\meshslicer.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|solutionrelative:assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\meshslicer.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|E:\\Rigidbody Fracture\\assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\fragmentdata.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{42E1FF46-83F8-831A-F3E7-5B2AF867F051}|RuntimeAssembly.csproj|solutionrelative:assets\\plugins\\openfracture\\runtime\\scripts\\fragment\\fragmentdata.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MeshData.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshData.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\MeshData.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshData.cs",
+              "RelativeToolTip": "Assets\\Scripts\\MeshData.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T13:42:45.327Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MeshOperation.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshOperation.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\MeshOperation.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshOperation.cs",
+              "RelativeToolTip": "Assets\\Scripts\\MeshOperation.cs",
+              "ViewState": "AgIAACkAAAAAAAAAAAAIwDUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-24T20:06:07.343Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "RigidbodyFracture.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Scripts\\RigidbodyFracture.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\RigidbodyFracture.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\RigidbodyFracture.cs",
+              "RelativeToolTip": "Assets\\Scripts\\RigidbodyFracture.cs",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAAB0AAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-20T07:31:22.419Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Fracture.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fracture.cs",
+              "RelativeDocumentMoniker": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fracture.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fracture.cs",
+              "RelativeToolTip": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fracture.cs",
+              "ViewState": "AgIAANYAAAAAAAAAAAAAAN0AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-16T11:21:26.659Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Fragmenter.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\Fragmenter.cs",
+              "RelativeDocumentMoniker": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\Fragmenter.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\Fragmenter.cs",
+              "RelativeToolTip": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\Fragmenter.cs",
+              "ViewState": "AgIAAAkBAAAAAAAAAAAAAPQAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T07:48:21.151Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "MeshSlicer.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\MeshSlicer.cs",
+              "RelativeDocumentMoniker": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\MeshSlicer.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\MeshSlicer.cs",
+              "RelativeToolTip": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\MeshSlicer.cs",
+              "ViewState": "AgIAAC4BAAAAAAAAAAAAABIAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-20T05:25:29.228Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "FragmentData.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\FragmentData.cs",
+              "RelativeDocumentMoniker": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\FragmentData.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\FragmentData.cs",
+              "RelativeToolTip": "Assets\\Plugins\\OpenFracture\\Runtime\\Scripts\\Fragment\\FragmentData.cs",
+              "ViewState": "AgIAAI8AAAAAAAAAAAAvwJsAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T06:48:33.228Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
