@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using static UnityEngine.Mesh;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(Rigidbody))]
 public class RigidbodyFracture : MonoBehaviour
@@ -22,23 +23,18 @@ public class RigidbodyFracture : MonoBehaviour
         if (collision.relativeVelocity.magnitude > collisionVel.x)
         {
             point = collision.GetContact(0).point; normal = collision.relativeVelocity.normalized; gameObject.SetActive(false);
+            sliceRate = 0.2f + 0.3f * math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / 
+                (collisionVel.y - collisionVel.x), 0, 1);
             while (fractureCount-- > 0)
             {
-                MeshProjection meshProjection = new MeshProjection(meshData, transform, point, normal,
-                    sliceRate = 0.49f * (collision.relativeVelocity.magnitude - collisionVel.x) / (collisionVel.y - collisionVel.x));
-                Plane plane = meshProjection.GetPlaneData(sliceTilt);
-                Fracture(plane);
+                MeshProjection meshProjection = new MeshProjection(meshData, transform, point, normal);
+                meshProjection.GetSliceData(sliceRate, sliceTilt, out var sliceNormal, out var sliceOrigin);
+                MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topSlice, out var bottomSlice);
+                CreatFragment(bottomSlice, sliceRate * remainMass);
+                meshData = topSlice; remainMass *= (1 - sliceRate);
             }
             CreatFragment(meshData, remainMass);
         }
-    }
-
-    void Fracture(Plane plane)
-    {
-        MeshSlicer.Slice(meshData, plane.normal, plane.ClosestPointOnPlane(point),
-                             new float2(1,1), float2.zero, out var topSlice, out var bottomSlice);
-        CreatFragment(bottomSlice, sliceRate * remainMass);
-        meshData = topSlice; remainMass *= (1 - sliceRate);
     }
 
     void CreatFragment(MeshData meshData, float mass)

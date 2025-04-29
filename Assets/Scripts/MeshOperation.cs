@@ -1,70 +1,64 @@
 using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
 
 public class MeshProjection
 {
-    Transform trans; float rate;
-    float2[] points; float2 verLimit, horLimit, projPoint;
+    Transform trans;
+    float2[] points; public float2 verLimit, horLimit, projPoint, center2d;
     float3 center, point, worldNormal, normal, tangent, bitangent;
 
-    public MeshProjection(MeshData meshData, Transform trans, float3 point, float3 normal, float rate)
+    public MeshProjection(MeshData meshData, Transform trans, float3 point, float3 normal)
     {
-        center = meshData.bounds.center; points = new float2[meshData.vertices.Count];
+        points = new float2[meshData.vertices.Count];
         verLimit = horLimit = new float2(float.MaxValue, float.MinValue);
         this.trans = trans; this.point = trans.InverseTransformPoint(point); worldNormal = normal;
-        this.normal = trans.InverseTransformDirection(normal).normalized; this.rate = rate;
+        this.normal = trans.InverseTransformDirection(normal).normalized;
         tangent = math.normalize(math.cross(this.normal, new float3(0, 1, 0)));
         bitangent = math.normalize(math.cross(this.normal, tangent));
-        projPoint = new float2(math.dot(this.point - center, tangent), math.dot(this.point - center, bitangent));
+        for (int i = 0; i < meshData.vertices.Count; i++) 
+            center += (float3)meshData.vertices[i].position; center /= meshData.vertices.Count;
+        float3 offset = point - center; projPoint = new float2(math.dot(offset, tangent), math.dot(offset, bitangent));
         for (int i = 0; i < meshData.vertices.Count; i++)
         {
-            float3 vertex = meshData.vertices[i].position, offset = vertex - center;
-            points[i] = new float2(math.dot(offset, tangent), math.dot(offset, bitangent));
+            offset = (float3)meshData.vertices[i].position - center;
+            points[i] = new float2(math.dot(offset, tangent), math.dot(offset, bitangent)); center2d += points[i];
             verLimit.x = math.min(verLimit.x, points[i].x); verLimit.y = math.max(verLimit.y, points[i].x);
             horLimit.x = math.min(horLimit.x, points[i].y); horLimit.y = math.max(horLimit.y, points[i].y);
         }
+        center2d /= meshData.vertices.Count;
     }
 
-    public Plane GetPlaneData(float2 sliceTilt)
+    public void GetSliceData(float sliceRate, float2 sliceTilt, out float3 sliceNormal, out float3 sliceOrigin)
     {
-        float width = verLimit.y - verLimit.x, height = horLimit.y - horLimit.x, angle;
-        float2 center2D = new float2((verLimit.x + verLimit.y) * 0.5f, (horLimit.x + horLimit.y) * 0.5f);
+        float halfWidth = (verLimit.y - verLimit.x) * 0.5f, halfHeight = (horLimit.y - horLimit.x) * 0.5f, angle;
         int l = 0, r = 180, m = (l + r) / 2; angle = math.radians(m);
-        while (l < r)
+        while (l < r) 
         {
-            if (angle - math.sin(angle) <= 2 * rate * math.PI) l = m;
-            else r = m - 1;
+            if (angle - math.sin(angle) >= 2 * sliceRate * math.PI) r = m;
+            else l = m + 1;
             m = (l + r) / 2; angle = math.radians(m);
         }
         float theta = UnityEngine.Random.Range(0f, 2 * math.PI);
-        float2 dir = new float2(math.cos(theta), math.sin(theta));
+        float2 lineP0 = center2d + new float2(math.cos(theta) * halfWidth, math.sin(theta) * halfHeight);
+        float sign = math.sign((lineP0.y - center2d.y) * (projPoint.x - center2d.x) -
+            (lineP0.x - center2d.x) * (projPoint.y - center2d.y));
+        float2 lineP1 = center2d + new float2(math.cos(theta + sign * angle) * halfWidth, math.sin(theta + sign * angle) * halfHeight);
 
-        float2 lineP0 = center2D + new float2(dir.x * width, dir.y * height);
-        float sign = math.sign((lineP0.y - center2D.y) * (projPoint.x - center2D.x) -
-            (lineP0.x - center2D.x) * (projPoint.y - center2D.y));
-        float2 lineP1 = center2D + new float2(dir.x * math.cos(theta + sign * angle) * width,
-            dir.y * math.sin(theta + sign * angle) * height);
+        float3 P0 = center + tangent * lineP0.x + bitangent * lineP0.y, 
+               P1 = center + tangent * lineP1.x + bitangent * lineP1.y,
+               worldP0 = math.mul(trans.localToWorldMatrix, new float4(P0, 1)).xyz, 
+               worldP1 = math.mul(trans.localToWorldMatrix, new float4(P1, 1)).xyz;
 
-        float3 P0 = math.mul(trans.localToWorldMatrix, new float4(point + tangent * lineP0.x + bitangent * lineP0.y, 1)).xyz;
-        float3 P1 = math.mul(trans.localToWorldMatrix, new float4(point + tangent * lineP1.x + bitangent * lineP1.y, 1)).xyz;
-        float3 worldDir = math.normalize(P1 - P0);
+        float3 worldDir = math.normalize(worldP1 - worldP0);
         float3 baseNormal = math.normalize(math.cross(worldDir, worldNormal));
 
         float tilt = UnityEngine.Random.Range(sliceTilt.x, sliceTilt.y);
         quaternion q = quaternion.AxisAngle(worldDir, math.radians(tilt));
         float3 finalNormal = math.normalize(math.mul(new float4(math.mul(q, baseNormal), 0), trans.localToWorldMatrix)).xyz;
-        Debug.Log($"{F(trans.TransformDirection(finalNormal))+" "+F(finalNormal)}");
 
-        Plane tempPlane = new Plane(finalNormal, P0);
-        if (!tempPlane.GetSide(point)) finalNormal = -finalNormal;
-        return new Plane(finalNormal, P0);
-    }
-
-    float F(float3 dir)
-    {
-        return math.atan(dir.y / math.sqrt((dir.x * dir.x) + (dir.z + dir.z)))/math.PI*180;
+        if (math.dot(point - P0, finalNormal) < 0) finalNormal = -finalNormal;
+        sliceNormal = finalNormal; sliceOrigin = P0;
     }
 }
 
@@ -189,13 +183,7 @@ public class MeshTriangulator
 
 public static class MeshSlicer
 {
-    public static void Slice(MeshData meshData,
-                             Vector3 sliceNormal,
-                             Vector3 sliceOrigin,
-                             Vector2 textureScale,
-                             Vector2 textureOffset,
-                             out MeshData topSlice,
-                             out MeshData bottomSlice)
+    public static void Slice(MeshData meshData, Vector3 sliceNormal, Vector3 sliceOrigin, out MeshData topSlice, out MeshData bottomSlice)
     {
         topSlice = new MeshData(meshData.vertexCount, meshData.triangleCount);
         bottomSlice = new MeshData(meshData.vertexCount, meshData.triangleCount);
@@ -224,7 +212,7 @@ public static class MeshSlicer
         SplitTriangles(meshData, topSlice, bottomSlice, sliceNormal, sliceOrigin, side, MeshType.Default);
         SplitTriangles(meshData, topSlice, bottomSlice, sliceNormal, sliceOrigin, side, MeshType.CutFace);
 
-        FillCutFaces(topSlice, bottomSlice, -sliceNormal, textureScale, textureOffset);
+        FillCutFaces(topSlice, bottomSlice, -sliceNormal);
     }
 
     /// <summary>
@@ -238,9 +226,7 @@ public static class MeshSlicer
     /// <param name="textureOffset">Offset to apply to UV coordinates</param>
     private static void FillCutFaces(MeshData topSlice,
                                      MeshData bottomSlice,
-                                     Vector3 sliceNormal,
-                                     Vector2 textureScale,
-                                     Vector2 textureOffset)
+                                     Vector3 sliceNormal)
     {
         // Since the topSlice and bottomSlice both share the same cut face, we only need to calculate it
         // once. Then the same vertex/triangle data for the face will be used for both slices, except
@@ -265,9 +251,8 @@ public static class MeshSlicer
             // UV coordinates are based off of the 2D coordinates used for triangulation
             // During triangulation, coordinates are normalized to [0,1], so need to multiply
             // by normalization scale factor to get back to the appropritate scale
-            Vector2 uv = new Vector2(
-                (triangulator.normalizationScaleFactor * point.coords.x) * textureScale.x + textureOffset.x,
-                (triangulator.normalizationScaleFactor * point.coords.y) * textureScale.y + textureOffset.y);
+            Vector2 uv = new Vector2(triangulator.normalizationScaleFactor * point.coords.x,
+                triangulator.normalizationScaleFactor * point.coords.y);
 
             // Update normals and UV coordinates for the cut vertices
             var topVertex = vertex;

@@ -3,52 +3,16 @@ using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
 
-public enum MeshType
-{
-    Default = 0,
-    CutFace = 1
-}
+public enum MeshType { Default = 0, CutFace = 1}
 
 public struct MeshVertex
 {
     public Vector3 position, normal;
     public Vector2 uv;
 
-    public MeshVertex(Vector3 position)
-    {
-        this.position = position; normal = Vector3.zero; uv = Vector2.zero;
-    }
-
     public MeshVertex(Vector3 position, Vector3 normal, Vector2 uv)
     {
         this.position = position; this.normal = normal; this.uv = uv;
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (!(obj is MeshVertex)) return false;
-
-        return ((MeshVertex)obj).position.Equals(this.position);
-    }
-
-    public static bool operator ==(MeshVertex lhs, MeshVertex rhs)
-    {
-        return lhs.Equals(rhs);
-    }
-
-    public static bool operator !=(MeshVertex lhs, MeshVertex rhs)
-    {
-        return !lhs.Equals(rhs);
-    }
-
-    public override int GetHashCode()
-    {
-        return position.GetHashCode();
-    }
-
-    public override string ToString()
-    {
-        return $"Position = {position}, Normal = {normal}, UV = {uv}";
     }
 }
 
@@ -65,31 +29,6 @@ public class MeshEdge
     {
         this.v1 = v1; this.v2 = v2; this.t1 = t1; this.t2 = t2; t1Edge = edge1;
     }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is MeshEdge)
-        {
-            MeshEdge other = (MeshEdge)obj;
-            return (v1 == other.v1 && v2 == other.v2) || (v1 == other.v2 && v2 == other.v1);
-        }
-        return false;
-    }
-
-    public override int GetHashCode()
-    {
-        return new { v1, v2 }.GetHashCode() + new { v2, v1 }.GetHashCode();
-    }
-
-    public static bool operator ==(MeshEdge lhs, MeshEdge rhs)
-    {
-        return lhs.Equals(rhs);
-    }
-
-    public static bool operator !=(MeshEdge lhs, MeshEdge rhs)
-    {
-        return !lhs.Equals(rhs);
-    }
 }
 
 public class MeshData
@@ -97,7 +36,7 @@ public class MeshData
     public List<MeshVertex> vertices, cutVertices;
     public List<int>[] triangles; public List<MeshEdge> constraints;
 
-    public int[] indexMap; public Bounds bounds;
+    public int[] indexMap;
     public int vertexCount { get => vertices.Count + cutVertices.Count; }
     public int triangleCount
     {
@@ -136,8 +75,6 @@ public class MeshData
 
         if (mesh.subMeshCount >= 2) triangles[1] = new List<int>(mesh.GetTriangles(1));
         else triangles[1] = new List<int>(mesh.triangles.Length / 10);
-
-        CalculateBounds();
     }
 
     public void AddCutFaceVertex(Vector3 position, Vector3 normal, Vector2 uv)
@@ -206,25 +143,6 @@ public class MeshData
     public int[] GetTriangles(int subMeshIndex)
     {
         return triangles[subMeshIndex].ToArray();
-    }
-
-    public void CalculateBounds()
-    {
-        float vertexCount = (float)vertices.Count;
-        Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-        Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-
-        foreach (MeshVertex vertex in vertices)
-        {
-            if (vertex.position.x < min.x) min.x = vertex.position.x;
-            if (vertex.position.y < min.y) min.y = vertex.position.y;
-            if (vertex.position.z < min.z) min.z = vertex.position.z;
-            if (vertex.position.x > max.x) max.x = vertex.position.x;
-            if (vertex.position.y > max.y) max.y = vertex.position.y;
-            if (vertex.position.z > max.z) max.z = vertex.position.z;
-        }
-
-        bounds = new Bounds((max + min) / 2f, max - min);
     }
 
     public Mesh ToMesh()
