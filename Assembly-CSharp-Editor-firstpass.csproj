@@ -1333,14 +1333,6 @@
       <Project>{0325492E-AB37-97A1-A711-422DBA498E48}</Project>
       <Name>Assembly-CSharp-firstpass</Name>
     </ProjectReference>
-    <ProjectReference Include="OpenFracture.Editor.csproj">
-      <Project>{E2F2DBBB-200A-724F-32C3-52A9C90156B4}</Project>
-      <Name>OpenFracture.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="RuntimeAssembly.csproj">
-      <Project>{42E1FF46-83F8-831A-F3E7-5B2AF867F051}</Project>
-      <Name>RuntimeAssembly</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
