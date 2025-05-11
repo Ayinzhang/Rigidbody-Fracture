@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 public enum MeshType { Default = 0, CutFace = 1}
 
@@ -167,21 +168,22 @@ public class MeshData
 
     public Mesh ToMesh()
     {
-        Mesh mesh = new Mesh(); int indexStart = 0;
+        Mesh mesh = new Mesh();
 
-        VertexAttributeDescriptor[] layout = new[]
+        var layout = new[]
         {
             new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
             new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3),
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2),
         };
 
-        mesh.subMeshCount = triangles.Length;
         mesh.SetIndexBufferParams(triangleCount, IndexFormat.UInt32);
         mesh.SetVertexBufferParams(vertexCount, layout);
         mesh.SetVertexBufferData(vertices, 0, 0, vertices.Count);
         mesh.SetVertexBufferData(cutVertices, 0, vertices.Count, cutVertices.Count);
 
+        mesh.subMeshCount = triangles.Length;
+        int indexStart = 0;
         for (int i = 0; i < triangles.Length; i++)
         {
             var subMeshIndexBuffer = triangles[i];
@@ -191,6 +193,7 @@ public class MeshData
         }
 
         mesh.RecalculateBounds();
+
         return mesh;
     }
 }

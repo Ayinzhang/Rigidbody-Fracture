@@ -8,11 +8,13 @@ public class RigidbodyFracture : MonoBehaviour
     public int fractureCount = 3;
     public float2 collisionVel = new float2(1, 100), sliceTilt = new float2(15, 30);
 
+    Material mat;
     GameObject fragmentRoot; Rigidbody rb; MeshData meshData, remainData; List<Mesh> meshes;
     int fragmentCount; float sliceRate, topMass, bottomMass, remainMass; float3 point, normal;
 
     void Start()
     {
+        mat = GetComponent<MeshRenderer>().material;
         rb = GetComponent<Rigidbody>(); remainMass = rb.mass;
         meshData = new MeshData(GetComponent<MeshFilter>().mesh);
         meshes = new List<Mesh>();
@@ -61,7 +63,8 @@ public class RigidbodyFracture : MonoBehaviour
         fragment.transform.parent = fragmentRoot.transform; fragment.transform.localPosition = float3.zero;
         fragment.transform.localRotation = quaternion.identity; fragment.transform.localScale = transform.localScale;
         MeshFilter mf = fragment.AddComponent<MeshFilter>(); mf.mesh = remainData.ToMesh();
-        MeshRenderer mr = fragment.AddComponent<MeshRenderer>(); mr.materials = GetComponent<MeshRenderer>().materials;
+        MeshRenderer mr = fragment.AddComponent<MeshRenderer>(); Material[] materials = new Material[mf.mesh.subMeshCount];
+        for (int i = 0; i < materials.Length; i++) materials[i] = mat; mr.materials = materials;
         Rigidbody rb = fragment.AddComponent<Rigidbody>(); rb.mass = mass; rb.useGravity = true;
         foreach (var mesh in meshes)
         {

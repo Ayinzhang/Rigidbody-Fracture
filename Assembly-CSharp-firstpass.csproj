@@ -79,6 +79,7 @@
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireMan.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireRestriction.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\RFFlash.cs" />
+    <Compile Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Finished\Scripts\Grenade.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireDust.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Shatter\RFSurface.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Man\RFPooling.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireWind.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireRigidRoot.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireCluster.cs" />
+    <Compile Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Finished\Scripts\EventManager.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Rigid\RFFragmentProperties.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireVortex.cs" />
     <Compile Include="Assets\Plugins\RayFire\Tutorial\Scripts\ActivationEventScript.cs" />
@@ -105,15 +107,18 @@
     <Compile Include="Assets\Plugins\RayFire\Tutorial\Scripts\AddRigidComponent.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireRigid.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Rigid\RFPhysic.cs" />
+    <Compile Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Finished\Scripts\Bomb.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Rigid\RFLimitations.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Cluster\RFFace.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireSnapshot.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\RFCluster.cs" />
+    <Compile Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Scripts\Explosion\destroyMe.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Shatter\RFShatterAdvanced.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireBlade.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\RFEvent.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Rigid\RFDamage.cs" />
     <Compile Include="Assets\Plugins\RayFire\Tutorial\Scripts\ApplyDamageScript.cs" />
+    <Compile Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Scripts\SlowMotion.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Components\RayfireUnyielding.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\Rigid\RFFade.cs" />
     <Compile Include="Assets\Plugins\RayFire\Scripts\Classes\RFStress.cs" />
@@ -128,10 +133,12 @@
     <None Include="Assets\Plugins\RayFire\Info\FAQ.txt" />
     <None Include="Assets\Plugins\RayFire\Plugins\Windows\x86\RFLib_DotNet_2018_x86.dll" />
     <None Include="Assets\Plugins\RayFire\Plugins\Ios\RFLib_DotNet_2018_ios.dll" />
+    <None Include="Assets\Plugins\RayFire\RayFire-Tutorial\Assets\Shaders\alphaBlend_glow.shader" />
     <None Include="Assets\Plugins\RayFire\Info\CHANGELOG.txt" />
     <None Include="Assets\Plugins\RayFire\Plugins\Mac\RFLib_DotNet_2018_osx.dll" />
     <None Include="Assets\Plugins\RayFire\Info\README.txt" />
     <None Include="Assets\Plugins\RayFire\Info\License.txt" />
+    <None Include="Assets\Plugins\RayFire\RayFire-Tutorial\ProjectSettings\ProjectVersion.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1312,6 +1319,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="OpenFracture.Editor.csproj">
+      <Project>{E2F2DBBB-200A-724F-32C3-52A9C90156B4}</Project>
+      <Name>OpenFracture.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="RuntimeAssembly.csproj">
+      <Project>{42E1FF46-83F8-831A-F3E7-5B2AF867F051}</Project>
+      <Name>RuntimeAssembly</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
