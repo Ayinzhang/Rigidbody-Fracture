@@ -3,15 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{0325492E-AB37-97A1-A711-422DBA498E48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuntimeAssembly", "RuntimeAssembly.csproj", "{42E1FF46-83F8-831A-F3E7-5B2AF867F051}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor-firstpass", "Assembly-CSharp-Editor-firstpass.csproj", "{18C170A7-DA72-1FA2-35C5-2A6E633B204E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFracture.Editor", "OpenFracture.Editor.csproj", "{E2F2DBBB-200A-724F-32C3-52A9C90156B4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{42FA5723-32D1-7139-7B86-F3AFBEC3BC74}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests.csproj", "{02090986-AF31-026F-21BA-8AC5B14BF5D1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{8EDF43B6-5861-6C88-C2A4-59C39285A616}"
 EndProject
@@ -25,26 +19,14 @@ Global
 		{0325492E-AB37-97A1-A711-422DBA498E48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0325492E-AB37-97A1-A711-422DBA498E48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0325492E-AB37-97A1-A711-422DBA498E48}.Release|Any CPU.Build.0 = Release|Any CPU
-		{42E1FF46-83F8-831A-F3E7-5B2AF867F051}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{42E1FF46-83F8-831A-F3E7-5B2AF867F051}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{42E1FF46-83F8-831A-F3E7-5B2AF867F051}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{42E1FF46-83F8-831A-F3E7-5B2AF867F051}.Release|Any CPU.Build.0 = Release|Any CPU
 		{18C170A7-DA72-1FA2-35C5-2A6E633B204E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{18C170A7-DA72-1FA2-35C5-2A6E633B204E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18C170A7-DA72-1FA2-35C5-2A6E633B204E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18C170A7-DA72-1FA2-35C5-2A6E633B204E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E2F2DBBB-200A-724F-32C3-52A9C90156B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E2F2DBBB-200A-724F-32C3-52A9C90156B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E2F2DBBB-200A-724F-32C3-52A9C90156B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E2F2DBBB-200A-724F-32C3-52A9C90156B4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{42FA5723-32D1-7139-7B86-F3AFBEC3BC74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{42FA5723-32D1-7139-7B86-F3AFBEC3BC74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42FA5723-32D1-7139-7B86-F3AFBEC3BC74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42FA5723-32D1-7139-7B86-F3AFBEC3BC74}.Release|Any CPU.Build.0 = Release|Any CPU
-		{02090986-AF31-026F-21BA-8AC5B14BF5D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{02090986-AF31-026F-21BA-8AC5B14BF5D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{02090986-AF31-026F-21BA-8AC5B14BF5D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{02090986-AF31-026F-21BA-8AC5B14BF5D1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8EDF43B6-5861-6C88-C2A4-59C39285A616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8EDF43B6-5861-6C88-C2A4-59C39285A616}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EDF43B6-5861-6C88-C2A4-59C39285A616}.Release|Any CPU.ActiveCfg = Release|Any CPU

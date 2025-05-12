@@ -2,138 +2,273 @@ using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
 
-public class MeshTriangulator
+public static class MathUtils
 {
-    // Constants for triangulation array indices
-    protected const int V1 = 0; // Vertex 1
-    protected const int V2 = 1; // Vertex 2
-    protected const int V3 = 2; // Vertex 3
-    protected const int E12 = 3; // Adjacency data for edge (V1 -> V2)
-    protected const int E23 = 4; // Adjacency data for edge (V2 -> V3)
-    protected const int E31 = 5; // Adjacency data for edge (V3 -> V1)
-
-    // Index for super triangle
-    protected const int SUPERTRIANGLE = 0;
-
-    // Index for out of bounds triangle (boundary edge)
-    protected const int OUT_OF_BOUNDS = -1;
-
-    // Number of points to be triangulated (excluding super triangle vertices)
-    protected int N;
-
-    // Total number of triangles generated during triangulation
-    protected int triangleCount;
-
-    // Triangle vertex and adjacency data
-    // Index 0 = Triangle index
-    // Index 1 = [V1, V2, V3, E12, E23, E32]
-    protected int[,] triangulation;
-
-    // Points on the plane to triangulate
-    public TriangulationPoint[] points;
-
-    // Array which tracks which triangles should be ignored in the final triangulation
-    protected bool[] skipTriangle;
-
-    // Normal of the plane on which the points lie
-    protected Vector3 normal;
-
-    // Normalization scale factor
-    public float normalizationScaleFactor = 1f;
-
-    private static readonly int[] edgeVertex1 = new int[] { 0, 0, 0, V1, V2, V3 };
-
     /// <summary>
-    /// Given an edge E12, E23, E31, this returns the second vertex for that edge (V2, V3, V1, respectively)
+    /// Returns true if the quad specified by the two diagonals a1->a2 and b1->b2 is convex
+    /// Quad is convex if a1->a2 and b1->b2 intersect each other
     /// </summary>
-    /// <value></value>
-    private static readonly int[] edgeVertex2 = new int[] { 0, 0, 0, V2, V3, V1 };
-
-    /// <summary>
-    /// Given an edge E12, E23, E31, this returns the vertex opposite that edge (V3, V1, V2, respectively)
-    /// </summary>
-    /// <value></value>
-    private static readonly int[] oppositePoint = new int[] { 0, 0, 0, V3, V1, V2 };
-
-    /// <summary>
-    /// Given an edge E12, E23, E31, this returns the next clockwise edge (E23, E31, E12, respectively)
-    /// </summary>
-    /// <value></value>
-    private static readonly int[] nextEdge = new int[] { 0, 0, 0, E23, E31, E12 };
-
-    /// <summary>
-    /// Given an edge E12, E23, E31, this returns the previous clockwise edge (E31, E12, E23, respectively)
-    /// </summary>
-    /// <value></value>
-    private static readonly int[] previousEdge = new int[] { 0, 0, 0, E31, E12, E23 };
-
-    /// <summary>
-    /// List of edge constraints provided during initialization
-    /// </summary>
-    private List<MeshEdge> constraints;
-
-    /// <summary>
-    /// This array maps each vertex to a triangle in the triangulation that contains it. This helps
-    /// speed up the search when looking for intersecting edge. It isn't necessary to keep track of
-    /// every triangle for each vertex.
-    /// </summary>
-    private int[] vertexTriangles;
-
-    /// <summary>
-    /// Flag for each triangle to track whether it has been visited or not when finding the starting edge.
-    /// Define at the class level to prevent unnecessary GC when calling FindStartingEdge multiple times.
-    /// </summary>
-    private bool[] visited;
-
-    /// <summary>
-    /// Initializes the triangulator with the vertex data to be triangulated given a set of edge constraints
-    /// </summary>
-    /// <param name="inputPoints">The of points to triangulate.</param>
-    /// <param name="constraints">The list of edge constraints which defines how the vertices in `inputPoints` are connected.</param>
-    /// <param name="normal">The normal of the plane in which the `inputPoints` lie.</param>
+    /// <param name="a1">Start point of diagonal A</param>
+    /// <param name="a2">End point of diagonal A</param>
+    /// <param name="b1">Start point of diagonal B</param>
+    /// <param name="b2">End point of diagonal B</param>
     /// <returns></returns>
-    public MeshTriangulator(List<MeshVertex> inputPoints, List<MeshEdge> constraints, Vector3 normal)
+    public static bool IsQuadConvex(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2)
     {
-        this.constraints = constraints;
-        if (inputPoints == null || inputPoints.Count < 3)
+        return LinesIntersectInternal(a1, a2, b1, b2, true);
+    }
+
+    /// <summary>
+    /// Returns true lines a1->a2 and b1->b2 is intersect
+    /// </summary>
+    /// <param name="a1">Start point of line A</param>
+    /// <param name="a2">End point of line A</param>
+    /// <param name="b1">Start point of line B</param>
+    /// <param name="b2">End point of line B</param>
+    /// <returns></returns>
+    public static bool LinesIntersect(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2)
+    {
+        return LinesIntersectInternal(a1, a2, b1, b2, false);
+    }
+
+    /// <summary>
+    /// Returns true lines a1->a2 and b1->b2 is intersect
+    /// </summary>
+    /// <param name="a1">Start point of line A</param>
+    /// <param name="a2">End point of line A</param>
+    /// <param name="b1">Start point of line B</param>
+    /// <param name="b2">End point of line B</param>
+    /// <returns></returns>
+    private static bool LinesIntersectInternal(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2, bool includeSharedEndpoints)
+    {
+        Vector2 a12 = new Vector2(a2.x - a1.x, a2.y - a1.y);
+        Vector2 b12 = new Vector2(b2.x - b1.x, b2.y - b1.y);
+
+        // If any of the vertices are shared between the two diagonals,
+        // the quad collapses into a triangle and is convex by default.
+        if (a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2)
         {
-            return;
+            return includeSharedEndpoints;
+        }
+        else
+        {
+            // Compute cross product between each point and the opposite diagonal
+            // Look at sign of the Z component to see which side of line point is on
+            float a1xb = (a1.x - b1.x) * b12.y - (a1.y - b1.y) * b12.x;
+            float a2xb = (a2.x - b1.x) * b12.y - (a2.y - b1.y) * b12.x;
+            float b1xa = (b1.x - a1.x) * a12.y - (b1.y - a1.y) * a12.x;
+            float b2xa = (b2.x - a1.x) * a12.y - (b2.y - a1.y) * a12.x;
+
+            // Check that the points for each diagonal lie on opposite sides of the other
+            // diagonal. Quad is also convex if a1/a2 lie on b1->b2 (and vice versa) since
+            // the shape collapses into a triangle (hence >= instead of >)
+            return ((a1xb >= 0 && a2xb <= 0) || (a1xb <= 0 && a2xb >= 0)) &&
+                   ((b1xa >= 0 && b2xa <= 0) || (b1xa <= 0 && b2xa >= 0));
+        }
+    }
+
+    /// <summary>
+    /// Determines the intersection between the line segment a->b and the plane defined by the specified normal and origin point. If an intersection point exists, it is returned via the out parameter `intersection`. The parameter `s` is defined below and is used to properly interpolate normals/uvs for intersection vertices.
+    /// </summary>
+    /// <param name="a">Start point of line</param>
+    /// <param name="b">End point of line</param>
+    /// <param name="n">Plane normal</param>
+    /// <param name="p0">Plane origin</param>
+    /// <param name="x">If intersection exists, intersection point return as out parameter.</param>
+    /// <param name="s">Returns the parameterization of the intersection where x = a + (b - a) * s</param>
+    /// <returns></returns>
+    public static bool LinePlaneIntersection(Vector3 a,
+                                             Vector3 b,
+                                             Vector3 n,
+                                             Vector3 p0,
+                                             out Vector3 x,
+                                             out float s)
+    {
+        // Initialize out params
+        s = 0;
+        x = Vector3.zero;
+
+        // Handle degenerate cases
+        if (a == b)
+        {
+            return false;
+        }
+        else if (n == Vector3.zero)
+        {
+            return false;
         }
 
-        this.N = inputPoints.Count;
-        this.triangleCount = 2 * N + 1;
-        this.triangulation = new int[triangleCount, 6];
-        this.skipTriangle = new bool[triangleCount];
-        this.points = new TriangulationPoint[N + 3]; // Extra 3 points used to store super triangle
-        this.normal = normal;
+        // `s` is the parameter for the line segment a -> b where 0.0 <= s <= 1.0
+        s = Vector3.Dot(p0 - a, n) / Vector3.Dot(b - a, n);
 
-        // Choose two points in the plane as one basis vector
+        if (s >= 0 && s <= 1)
+        {
+            x = a + (b - a) * s;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true of the point `p` is on the left side of the directed line segment `i` -> `j`
+    /// Use for checking if a point is inside of a triangle. Since triangle vertices oriented
+    /// CCW, a point on the left side of a triangle edge is "inside" that edge of the triangle.
+    /// </summary>
+    /// <param name="p">Index of test point in `points` array</param>
+    /// <param name="i">Index of first vertex of the edge in the `points` array</param>
+    /// /// <param name="j">Index of second vertex of the edge in the `points` array</param>
+    /// <returns>True if the point `p` is on the left side of the line `i`->`j`</returns>
+    public static bool IsPointOnRightSideOfLine(Vector2 a, Vector2 b, Vector2 c)
+    {
+        // The <= is essential; if it is <, the whole thing falls apart
+        return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) <= 0;
+    }
+
+}
+
+public static class MeshProjector
+{
+    static float2[] points; static float2 minLeft, maxRight, projPoint, center2d;
+    static float3 center, worldNormal, tangent, bitangent;
+
+    public static void GetSlice(MeshData meshData, Transform trans, float3 point, float3 normal, 
+        float sliceRate, float2 sliceTilt, out float3 sliceNormal, out float3 sliceOrigin, out bool isFullSlice)
+    {
+        points = new float2[meshData.vertices.Count];
+        minLeft = new float2(float.MaxValue, float.MaxValue);
+        maxRight = new float2(float.MinValue, float.MinValue);
+        point = trans.InverseTransformPoint(point); worldNormal = normal;
+        normal = trans.InverseTransformDirection(normal).normalized;
+        tangent = math.normalize(math.cross(normal, new float3(0, 1, 0)));
+        bitangent = math.normalize(math.cross(normal, tangent));
+        for (int i = 0; i < meshData.vertices.Count; i++)
+            center += meshData.vertices[i].position; center /= meshData.vertices.Count;
+        float3 offset = point - center; projPoint = new float2(math.dot(offset, tangent), math.dot(offset, bitangent));
+        for (int i = 0; i < meshData.vertices.Count; i++)
+        {
+            offset = meshData.vertices[i].position - center;
+            points[i] = new float2(math.dot(offset, tangent), math.dot(offset, bitangent)); center2d += points[i];
+            minLeft.x = math.min(minLeft.x, points[i].x); minLeft.y = math.min(minLeft.y, points[i].y);
+            maxRight.x = math.max(maxRight.x, points[i].x); maxRight.y = math.max(maxRight.y, points[i].y);
+        }
+        center2d /= meshData.vertices.Count;
+
+        float halfWidth = (maxRight.x - minLeft.x) * 0.5f, halfHeight = (maxRight.y - minLeft.y) * 0.5f;
+        float2 areaCenter2d = new float2((minLeft.x + maxRight.x) * 0.5f, (minLeft.y + maxRight.y) * 0.5f);
+        isFullSlice = math.length(areaCenter2d - minLeft) >  2 * math.length(areaCenter2d - projPoint);
+        int l = 0, r = 180, m = (l + r) / 2; float angle = math.radians(m);
+        while (l < r) 
+        {
+            if (angle - math.sin(angle) >= 2 * sliceRate * math.PI) r = m;
+            else l = m + 1;
+            m = (l + r) / 2; angle = math.radians(m);
+        }
+        float2 lineP0, lineP1;
+        if (isFullSlice)
+        {
+            float theta = UnityEngine.Random.Range(0f, 2 * math.PI);
+            lineP0 = center2d + new float2(math.cos(theta) * halfWidth, math.sin(theta) * halfHeight);
+            float sign = math.sign((lineP0.y - center2d.y) * (projPoint.x - center2d.x) - (lineP0.x - center2d.x) * (projPoint.y - center2d.y));
+            lineP1 = center2d + new float2(math.cos(theta + sign * angle) * halfWidth, math.sin(theta + sign * angle) * halfHeight);
+        }
+        else
+        {
+            float pointAngle = math.atan2(projPoint.y - center2d.y, projPoint.x - center2d.x);
+            float2 projectPoint1 = projPoint - center2d; projectPoint1.x /= halfWidth; projectPoint1.y /= halfHeight;
+            float halfAngle = math.acos(math.length(projectPoint1)), delta = UnityEngine.Random.Range(0f, angle - 2 * halfAngle);
+            lineP0 = center2d + new float2(math.cos(pointAngle - halfAngle - delta) * halfWidth, math.sin(pointAngle - halfAngle - delta) * halfHeight);
+            lineP1 = center2d + new float2(math.cos(pointAngle + angle - halfAngle - delta) * halfWidth, math.sin(pointAngle + angle - halfAngle - delta) * halfHeight);
+        }
+        float3 P0 = sliceOrigin = center + tangent * lineP0.x + bitangent * lineP0.y, 
+               P1 = center + tangent * lineP1.x + bitangent * lineP1.y,
+               worldP0 = math.mul(trans.localToWorldMatrix, new float4(P0, 1)).xyz, 
+               worldP1 = math.mul(trans.localToWorldMatrix, new float4(P1, 1)).xyz;
+
+        float3 worldDir = math.normalize(worldP1 - worldP0);
+        float3 baseNormal = math.normalize(math.cross(worldDir, worldNormal));
+
+        float tilt = UnityEngine.Random.Range(sliceTilt.x, sliceTilt.y);
+        quaternion q = quaternion.AxisAngle(worldDir, (isFullSlice ? 1 : -1) * math.radians(tilt));
+        sliceNormal = math.normalize(math.mul(new float4(math.mul(q, baseNormal), 0), trans.localToWorldMatrix)).xyz;
+
+        if (math.dot(point - P0, sliceNormal) < 0) sliceNormal = -sliceNormal;
+    }
+}
+
+public static class MeshTriangulator
+{
+    const int V1 = 0, V2 = 1, V3 = 2, E12 = 3, E23 = 4, E31 = 5, SUPERTRIANGLE = 0, OUT_OF_BOUNDS = -1;
+    static int N, triangleCount;
+    static int[] vertexTriangles, edgeVertex1, edgeVertex2, oppositePoint, nextEdge, previousEdge;
+    static int[,] triangulation;
+    static bool[] visited, skipTriangle; static List<MeshEdge> constraints;
+
+    static public TriangulationPoint[] points; static public float normalizationScaleFactor = 1f;
+
+    static public int[] Triangulate(List<MeshVertex> inputPoints, List<MeshEdge> constraints, Vector3 normal)
+    {
+        MeshTriangulator.constraints = constraints;
+        if (inputPoints == null || inputPoints.Count < 3) return null;
+
+        N = inputPoints.Count;
+        triangleCount = 2 * N + 1;
+        triangulation = new int[triangleCount, 6];
+        skipTriangle = new bool[triangleCount];
+        points = new TriangulationPoint[N + 3];
+        edgeVertex1 = new int[] { 0, 0, 0, V1, V2, V3 };
+        edgeVertex2 = new int[] { 0, 0, 0, V2, V3, V1 };
+        oppositePoint = new int[] { 0, 0, 0, V3, V1, V2 };
+        nextEdge = new int[] { 0, 0, 0, E23, E31, E12 };
+        previousEdge = new int[] { 0, 0, 0, E31, E12, E23 };
+
         Vector3 e1 = math.normalize(inputPoints[0].position - inputPoints[1].position);
         Vector3 e2 = normal.normalized;
         Vector3 e3 = Vector3.Cross(e1, e2).normalized;
 
-        // To find the 2nd basis vector, find the largest component and swap with the smallest, negating the largest
-
-        // Project 3D vertex onto the 2D plane
         for (int i = 0; i < N; i++)
         {
             var position = inputPoints[i].position;
             var coords = new Vector2(Vector3.Dot(position, e1), Vector3.Dot(position, e3));
-            this.points[i] = new TriangulationPoint(i, coords);
+            points[i] = new TriangulationPoint(i, coords);
         }
+        // Need at least 3 vertices to triangulate
+        if (N < 3) return null;
+
+        AddSuperTriangle();
+        NormalizeCoordinates();
+        ComputeTriangulation();
+
+        if (constraints.Count > 0)
+        {
+            ApplyConstraints();
+            DiscardTrianglesViolatingConstraints();
+        }
+
+        MeshTriangulator.DiscardTrianglesWithSuperTriangleVertices();
+
+        List<int> triangles = new List<int>(3 * triangleCount);
+        for (int i = 0; i < triangleCount; i++)
+        {
+            // Add all triangles that don't contain a super-triangle vertex
+            if (!skipTriangle[i])
+            {
+                triangles.Add(triangulation[i, V1]);
+                triangles.Add(triangulation[i, V2]);
+                triangles.Add(triangulation[i, V3]);
+            }
+        }
+
+        return triangles.ToArray();
     }
 
-    protected void NormalizeCoordinates()
+    static void NormalizeCoordinates()
     {
-        // 1) Normalize coordinates. Coordinates are scaled so they lie between 0 and 1
-        // The scaling should be uniform so relative positions of points are unchanged
-
         float xMin = float.MaxValue;
         float xMax = float.MinValue;
         float yMin = float.MaxValue;
         float yMax = float.MinValue;
 
-        // Find min/max points in the set
         for (int i = 0; i < N; i++)
         {
             var point = points[i];
@@ -143,11 +278,8 @@ public class MeshTriangulator
             if (point.coords.y > yMax) yMax = point.coords.y;
         }
 
-        // Normalization coefficient. Using same coefficient for both x & y
-        // ensures uniform scaling
         normalizationScaleFactor = Mathf.Max(xMax - xMin, yMax - yMin);
 
-        // Normalize each point
         for (int i = 0; i < N; i++)
         {
             var point = points[i];
@@ -163,10 +295,10 @@ public class MeshTriangulator
     /// Sorts the points into bins using an ordered grid
     /// </summary>
     /// <returns>Returns the array of sorted points</returns>
-    protected TriangulationPoint[] SortPointsIntoBins()
+    static TriangulationPoint[] SortPointsIntoBins()
     {
         // Compute the number of bins along each axis
-        int n = Mathf.RoundToInt(Mathf.Pow((float)N, 0.25f));
+        int n = Mathf.RoundToInt(Mathf.Pow(N, 0.25f));
 
         // Total bin count
         int binCount = n * n;
@@ -175,20 +307,20 @@ public class MeshTriangulator
         // and dividing them into a n x n grid.
         for (int k = 0; k < N; k++)
         {
-            var point = this.points[k];
+            var point = MeshTriangulator.points[k];
             int i = (int)(0.99f * n * point.coords.y);
             int j = (int)(0.99f * n * point.coords.x);
             point.bin = BinSort.GetBinNumber(i, j, n);
         }
 
-        return BinSort.Sort<TriangulationPoint>(this.points, N, binCount);
+        return BinSort.Sort<TriangulationPoint>(MeshTriangulator.points, N, binCount);
     }
 
     /// <summary>
     /// Computes the triangulation of the point set.
     /// </summary>
     /// <returns>Returns true if the triangulation was successful</returns>
-    protected bool ComputeTriangulation()
+    static bool ComputeTriangulation()
     {
         // Index of the current triangle being searched
         int tSearch = 0;
@@ -214,9 +346,9 @@ public class MeshTriangulator
                 }
 
                 // Get coordinates of triangle vertices
-                var v1 = this.points[triangulation[tSearch, V1]].coords;
-                var v2 = this.points[triangulation[tSearch, V2]].coords;
-                var v3 = this.points[triangulation[tSearch, V3]].coords;
+                var v1 = MeshTriangulator.points[triangulation[tSearch, V1]].coords;
+                var v2 = MeshTriangulator.points[triangulation[tSearch, V2]].coords;
+                var v3 = MeshTriangulator.points[triangulation[tSearch, V3]].coords;
 
                 // Verify that point is on the correct side of each edge of the triangle.
                 // If a point is on the left side of an edge, move to the adjacent triangle and check again. The search
@@ -250,12 +382,12 @@ public class MeshTriangulator
     /// <summary>
     /// Initializes the triangulation by inserting the super triangle
     /// </summary>
-    protected void AddSuperTriangle()
+    static void AddSuperTriangle()
     {
         // Add new points to the end of the points array
-        this.points[N] = new TriangulationPoint(N, new Vector2(-100f, -100f));
-        this.points[N + 1] = new TriangulationPoint(N + 1, new Vector2(0f, 100f));
-        this.points[N + 2] = new TriangulationPoint(N + 2, new Vector2(100f, -100f));
+        MeshTriangulator.points[N] = new TriangulationPoint(N, new Vector2(-100f, -100f));
+        MeshTriangulator.points[N + 1] = new TriangulationPoint(N + 1, new Vector2(0f, 100f));
+        MeshTriangulator.points[N + 2] = new TriangulationPoint(N + 2, new Vector2(100f, -100f));
 
         // Store supertriangle in the first column of the vertex and adjacency data
         triangulation[SUPERTRIANGLE, V1] = N;
@@ -274,7 +406,7 @@ public class MeshTriangulator
     /// <param name="p">The index of the point to insert</param>
     /// <param name="t">The index of the triangle</param>
     /// <param name="triangleCount">Total number of triangles created so far</param>
-    protected void InsertPointIntoTriangle(TriangulationPoint p, int t, int triangleCount)
+    static void InsertPointIntoTriangle(TriangulationPoint p, int t, int triangleCount)
     {
         //                         V1
         //                         *
@@ -341,7 +473,7 @@ public class MeshTriangulator
     /// <param name="t1">Index of first triangle to check</param>
     /// <param name="t2">Index of second triangle to check</param>
     /// <param name="t3">Index of third triangle to check</param>
-    protected void RestoreDelauneyTriangulation(TriangulationPoint p, int t1, int t2, int t3)
+    static void RestoreDelauneyTriangulation(TriangulationPoint p, int t1, int t2, int t3)
     {
         int t4;
         Stack<(int, int)> s = new Stack<(int, int)>();
@@ -385,7 +517,7 @@ public class MeshTriangulator
     /// <returns>Returns true if the swap was performed. If the swap was not
     /// performed (e.g. returns false), t3 and t4 are unused.
     /// </returns>
-    protected bool SwapQuadDiagonalIfNeeded(int p, int t1, int t2, out int t3, out int t4)
+    static bool SwapQuadDiagonalIfNeeded(int p, int t1, int t2, out int t3, out int t4)
     {
         // 1) Form quadrilateral from t1 + t2 (q0->q1->q2->q3)
         // 2) Swap diagonal between q1->q3 to q0->q2
@@ -483,7 +615,7 @@ public class MeshTriangulator
     /// <summary>
     /// Marks any triangles that contain super-triangle vertices as discarded
     /// </summary>
-    protected void DiscardTrianglesWithSuperTriangleVertices()
+    static void DiscardTrianglesWithSuperTriangleVertices()
     {
         for (int i = 0; i < triangleCount; i++)
         {
@@ -505,7 +637,7 @@ public class MeshTriangulator
     /// <param name="v3">Coordinates of 3rd vertex of triangle</param>
     /// <param name="v4">Coordinates of test point</param>
     /// <returns> Returns true if the triangle `t` circumscribes the point `p`</returns>
-    protected bool SwapTest(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4)
+    static bool SwapTest(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4)
     {
         float x13 = v1.x - v3.x;
         float x23 = v2.x - v3.x;
@@ -542,7 +674,7 @@ public class MeshTriangulator
     /// <param name="t">The index of the triangle</param>
     /// <param name="v">The index of the vertex</param>
     /// <returns>Returns true if the triangle `t` contains the vertex `v`</returns>
-    protected bool TriangleContainsVertex(int t, int v)
+    static bool TriangleContainsVertex(int t, int v)
     {
         return triangulation[t, V1] == v || triangulation[t, V2] == v || triangulation[t, V3] == v;
     }
@@ -554,7 +686,7 @@ public class MeshTriangulator
     /// <param name="t">The index of the triangle to update</param>
     /// <param name="tOld">The index to be replaced</param>
     /// <param name="tNew">The new index to replace with</param>
-    protected void UpdateAdjacency(int t, int tOld, int tNew)
+    static void UpdateAdjacency(int t, int tOld, int tNew)
     {
         // Boundary edge, no triangle exists
         int sharedEdge;
@@ -577,7 +709,7 @@ public class MeshTriangulator
     /// <returns>True if `tOrigin` is adjacent to `tAdjacent` and supplies the
     /// shared edge index via the out parameter. If `tOrigin` is an invalid index or
     /// `tAdjacent` is not adjacent to `tOrigin`, returns false.</returns>
-    protected bool FindSharedEdge(int tOrigin, int tAdjacent, out int edgeIndex)
+    static bool FindSharedEdge(int tOrigin, int tAdjacent, out int edgeIndex)
     {
         edgeIndex = 0;
 
@@ -607,48 +739,9 @@ public class MeshTriangulator
     }
 
     /// <summary>
-    /// Calculates the triangulation
-    /// </summary>
-    /// <returns>Returns an array containing the indices of the triangles, mapped to the list of points passed in during initialization.</returns>
-    public int[] Triangulate()
-    {
-        // Need at least 3 vertices to triangulate
-        if (N < 3)
-        {
-            return new int[] { };
-        }
-
-        this.AddSuperTriangle();
-        this.NormalizeCoordinates();
-        this.ComputeTriangulation();
-
-        if (constraints.Count > 0)
-        {
-            this.ApplyConstraints();
-            this.DiscardTrianglesViolatingConstraints();
-        }
-
-        this.DiscardTrianglesWithSuperTriangleVertices();
-
-        List<int> triangles = new List<int>(3 * triangleCount);
-        for (int i = 0; i < triangleCount; i++)
-        {
-            // Add all triangles that don't contain a super-triangle vertex
-            if (!skipTriangle[i])
-            {
-                triangles.Add(triangulation[i, V1]);
-                triangles.Add(triangulation[i, V2]);
-                triangles.Add(triangulation[i, V3]);
-            }
-        }
-
-        return triangles.ToArray();
-    }
-
-    /// <summary>
     /// Applys the edge constraints to the triangulation
     /// </summary>
-    internal void ApplyConstraints()
+    static void ApplyConstraints()
     {
         visited = new bool[triangulation.GetLength(0)];
 
@@ -678,7 +771,7 @@ public class MeshTriangulator
     /// Searches through the triangulation to find intersecting edges
     /// </summary>
     /// <param name="intersectingEdges"></param>
-    internal Queue<MeshEdge> FindIntersectingEdges(MeshEdge constraint, int[] vertexTriangles)
+    static Queue<MeshEdge> FindIntersectingEdges(MeshEdge constraint, int[] vertexTriangles)
     {
         Queue<MeshEdge> intersectingEdges = new Queue<MeshEdge>();
 
@@ -750,7 +843,7 @@ public class MeshTriangulator
     /// Finds the starting edge for the search to find all edges that intersect the constraint
     /// </summary>
     /// <param name="constraint">The constraint being used to check for intersections</param>
-    internal bool FindStartingEdge(int[] vertexTriangles, MeshEdge constraint, out MeshEdge startingEdge)
+    static bool FindStartingEdge(int[] vertexTriangles, MeshEdge constraint, out MeshEdge startingEdge)
     {
         // Initialize out parameter to default value
         startingEdge = new MeshEdge(-1, -1);
@@ -836,7 +929,7 @@ public class MeshTriangulator
     /// </summary>
     /// <param name="constraint">The constraint to check against</param>
     /// <param name="intersectingEdges">A queue containing the previously found edges that intersect the constraint</param>
-    internal void RemoveIntersectingEdges(MeshEdge constraint, Queue<MeshEdge> intersectingEdges)
+    static void RemoveIntersectingEdges(MeshEdge constraint, Queue<MeshEdge> intersectingEdges)
     {
         // Remove intersecting edges. Keep track of the new edges that we create
         List<MeshEdge> newEdges = new List<MeshEdge>();
@@ -907,7 +1000,7 @@ public class MeshTriangulator
     /// </summary>
     /// <param name="constraint">The constraint that was added to the triangulation</param>
     /// <param name="newEdges">The list of new edges that were added</param>
-    internal void RestoreConstrainedDelauneyTriangulation(MeshEdge constraint, List<MeshEdge> newEdges)
+    static void RestoreConstrainedDelauneyTriangulation(MeshEdge constraint, List<MeshEdge> newEdges)
     {
         // Iterate over the list of newly created edges and swap non-constraint diagonals until no more swaps take place
         bool swapOccurred = true;
@@ -949,7 +1042,7 @@ public class MeshTriangulator
     /// <summary>
     /// Discards triangles that violate the any of the edge constraints
     /// </summary>
-    internal void DiscardTrianglesViolatingConstraints()
+    static void DiscardTrianglesViolatingConstraints()
     {
         // Initialize to all triangles being skipped
         for (int i = 0; i < triangleCount; i++)
@@ -959,9 +1052,9 @@ public class MeshTriangulator
 
         // Identify the boundary edges
         HashSet<(int, int)> boundaries = new HashSet<(int, int)>();
-        for (int i = 0; i < this.constraints.Count; i++)
+        for (int i = 0; i < MeshTriangulator.constraints.Count; i++)
         {
-            MeshEdge constraint = this.constraints[i];
+            MeshEdge constraint = MeshTriangulator.constraints[i];
             boundaries.Add((constraint.v1, constraint.v2));
         }
 
@@ -1053,7 +1146,7 @@ public class MeshTriangulator
     /// <param name="t">The triangle to test</param>
     /// <param name="constraint">The edge constraint</param>
     /// <returns>True if the triangle contains one or both of the endpoints of the constraint</returns>
-    internal bool TriangleContainsConstraint(int t, MeshEdge constraint)
+    static bool TriangleContainsConstraint(int t, MeshEdge constraint)
     {
         return (triangulation[t, V1] == constraint.v1 || triangulation[t, V2] == constraint.v1 || triangulation[t, V3] == constraint.v1) &&
                (triangulation[t, V1] == constraint.v2 || triangulation[t, V2] == constraint.v2 || triangulation[t, V3] == constraint.v2);
@@ -1066,7 +1159,7 @@ public class MeshTriangulator
     /// <param name="constraint">The edge constraint</param>
     /// <param name="intersectingEdgeIndex">The index of the intersecting edge (E12, E23, E31)</param>
     /// <returns>Returns true if an intersection is found, otherwise false.</returns>
-    internal bool EdgeConstraintIntersectsTriangle(int t, MeshEdge constraint, out int intersectingEdgeIndex)
+    static bool EdgeConstraintIntersectsTriangle(int t, MeshEdge constraint, out int intersectingEdgeIndex)
     {
         Vector2 v_i = points[constraint.v1].coords;
         Vector2 v_j = points[constraint.v2].coords;
@@ -1101,7 +1194,7 @@ public class MeshTriangulator
     /// </summary>
     /// <param name="t1">Base triangle</param>
     /// <param name="intersectingEdge">Edge index that is being intersected</param>
-    internal bool FindQuadFromSharedEdge(int t1, int t1SharedEdge, out Quad quad)
+    static bool FindQuadFromSharedEdge(int t1, int t1SharedEdge, out Quad quad)
     {
         //               q3        
         //      *---------*---------*
@@ -1168,7 +1261,7 @@ public class MeshTriangulator
     /// Swaps the diagonal of the quadrilateral q0->q1->q2->q3 formed by t1 and t2
     /// </summary>
     /// <param name="">The quad that will have its diagonal swapped</param>
-    internal void SwapQuadDiagonal(Quad quad, IEnumerable<MeshEdge> edges1, IEnumerable<MeshEdge> edges2, IEnumerable<MeshEdge> edges3)
+    static void SwapQuadDiagonal(Quad quad, IEnumerable<MeshEdge> edges1, IEnumerable<MeshEdge> edges2, IEnumerable<MeshEdge> edges3)
     {
         // BEFORE
         //               q3        
@@ -1249,7 +1342,7 @@ public class MeshTriangulator
     /// <param name="t1R"></param>
     /// <param name="t2L"></param>
     /// <param name="t2R"></param>
-    internal void UpdateEdgesAfterSwap(IEnumerable<MeshEdge> edges, int t1, int t2, int t1L, int t1R, int t2L, int t2R)
+    static void UpdateEdgesAfterSwap(IEnumerable<MeshEdge> edges, int t1, int t2, int t1L, int t1R, int t2L, int t2R)
     {
         if (edges == null)
         {
@@ -1298,65 +1391,6 @@ public class MeshTriangulator
                 edge.t2 = t1;
             }
         }
-    }
-}
-
-public static class MeshProjector
-{
-    static float2[] points; static float2 minLeft, maxRight, projPoint, center2d;
-    static float3 center, worldNormal, tangent, bitangent;
-
-    public static void GetSlice(MeshData meshData, Transform trans, float3 point, float3 normal, 
-        float sliceRate, float2 sliceTilt, out float3 sliceNormal, out float3 sliceOrigin, out bool isFullSlice)
-    {
-        points = new float2[meshData.vertices.Count];
-        minLeft = new float2(float.MaxValue, float.MaxValue);
-        maxRight = new float2(float.MinValue, float.MinValue);
-        point = trans.InverseTransformPoint(point); worldNormal = normal;
-        normal = trans.InverseTransformDirection(normal).normalized;
-        tangent = math.normalize(math.cross(normal, new float3(0, 1, 0)));
-        bitangent = math.normalize(math.cross(normal, tangent));
-        for (int i = 0; i < meshData.vertices.Count; i++)
-            center += meshData.vertices[i].position; center /= meshData.vertices.Count;
-        float3 offset = point - center; projPoint = new float2(math.dot(offset, tangent), math.dot(offset, bitangent));
-        for (int i = 0; i < meshData.vertices.Count; i++)
-        {
-            offset = meshData.vertices[i].position - center;
-            points[i] = new float2(math.dot(offset, tangent), math.dot(offset, bitangent)); center2d += points[i];
-            minLeft.x = math.min(minLeft.x, points[i].x); minLeft.y = math.min(minLeft.y, points[i].y);
-            maxRight.x = math.max(maxRight.x, points[i].x); maxRight.y = math.max(maxRight.y, points[i].y);
-        }
-        center2d /= meshData.vertices.Count;
-
-        float halfWidth = (maxRight.x - minLeft.x) * 0.5f, halfHeight = (maxRight.y - minLeft.y) * 0.5f;
-        float2 areaCenter2d = new float2((minLeft.x + maxRight.x) * 0.5f, (minLeft.y + maxRight.y) * 0.5f);
-        isFullSlice = math.length(areaCenter2d - minLeft) >  2 * math.length(areaCenter2d - projPoint);
-        int l = 0, r = 180, m = (l + r) / 2; float angle = math.radians(m);
-        while (l < r) 
-        {
-            if (angle - math.sin(angle) >= 2 * sliceRate * math.PI) r = m;
-            else l = m + 1;
-            m = (l + r) / 2; angle = math.radians(m);
-        }
-        float theta = UnityEngine.Random.Range(0f, 2 * math.PI);
-        float2 lineP0 = center2d + new float2(math.cos(theta) * halfWidth, math.sin(theta) * halfHeight);
-        float sign = (isFullSlice ? 1 : -1) * math.sign((lineP0.y - center2d.y) * (projPoint.x - center2d.x) -
-            (lineP0.x - center2d.x) * (projPoint.y - center2d.y));
-        float2 lineP1 = center2d + new float2(math.cos(theta + sign * angle) * halfWidth, math.sin(theta + sign * angle) * halfHeight);
-
-        float3 P0 = sliceOrigin = center + tangent * lineP0.x + bitangent * lineP0.y, 
-               P1 = center + tangent * lineP1.x + bitangent * lineP1.y,
-               worldP0 = math.mul(trans.localToWorldMatrix, new float4(P0, 1)).xyz, 
-               worldP1 = math.mul(trans.localToWorldMatrix, new float4(P1, 1)).xyz;
-
-        float3 worldDir = math.normalize(worldP1 - worldP0);
-        float3 baseNormal = math.normalize(math.cross(worldDir, worldNormal));
-
-        float tilt = UnityEngine.Random.Range(sliceTilt.x, sliceTilt.y);
-        quaternion q = quaternion.AxisAngle(worldDir, (isFullSlice ? 1 : -1) * math.radians(tilt));
-        sliceNormal = math.normalize(math.mul(new float4(math.mul(q, baseNormal), 0), trans.localToWorldMatrix)).xyz;
-
-        if (math.dot(point - P0, sliceNormal) < 0) sliceNormal = -sliceNormal;
     }
 }
 
@@ -1426,21 +1460,20 @@ public static class MeshSlicer
         if (topSlice.cutVertices.Count < 3) return;
 
         // Triangulate the cut face
-        var triangulator = new MeshTriangulator(topSlice.cutVertices, topSlice.constraints, sliceNormal);
-        int[] triangles = triangulator.Triangulate();
+        int[] triangles = MeshTriangulator.Triangulate(topSlice.cutVertices, topSlice.constraints, sliceNormal);
 
         // Update normal and UV for the cut face vertices
         for (int i = 0; i < topSlice.cutVertices.Count; i++)
         {
             var vertex = topSlice.cutVertices[i];
-            var point = triangulator.points[i];
+            var point = MeshTriangulator.points[i];
 
             // UV coordinates are based off of the 2D coordinates used for triangulation
             // During triangulation, coordinates are normalized to [0,1], so need to multiply
             // by normalization scale factor to get back to the appropritate scale
             Vector2 uv = new Vector2(
-                triangulator.normalizationScaleFactor * point.coords.x,
-                triangulator.normalizationScaleFactor * point.coords.y);
+                MeshTriangulator.normalizationScaleFactor * point.coords.x,
+                MeshTriangulator.normalizationScaleFactor * point.coords.y);
 
             // Update normals and UV coordinates for the cut vertices
             var topVertex = vertex;

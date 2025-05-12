@@ -25,7 +25,7 @@ public class RigidbodyFracture : MonoBehaviour
         if (collision.relativeVelocity.magnitude > collisionVel.x)
         {
             point = collision.GetContact(0).point; normal = collision.relativeVelocity.normalized; gameObject.SetActive(false);
-            sliceRate = 0.2f + 0.3f * math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / 
+            sliceRate = 0.3f + 0.2f * math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / 
                 (collisionVel.y - collisionVel.x), 0, 1);
             while (fractureCount-- > 0)
             {
@@ -35,17 +35,10 @@ public class RigidbodyFracture : MonoBehaviour
                 meshes.Add(bottomData.ToMesh());
                 topMass = remainMass * (isFullSlice ? 1 - sliceRate: sliceRate); 
                 bottomMass += remainMass - topMass; remainMass = topMass;
-                if (isFullSlice)
-                {
-                    if (remainData == null) remainData = bottomData;
-                    else remainData.AddMeshData(bottomData);
-                    CreatFragment(bottomMass); remainData = null; bottomMass = 0;
-                }
-                else if (remainData == null) remainData = bottomData;
-                else remainData.AddMeshData(bottomData);
+                if (isFullSlice) CreatFragment(bottomMass);
                 meshData = topData;
             }
-            if (remainData != null) CreatFragment(bottomMass);
+            if (meshes.Count > 0) CreatFragment(bottomMass);
             remainData = meshData; meshes.Add(remainData.ToMesh()); CreatFragment(remainMass);
         }
     }
@@ -62,15 +55,18 @@ public class RigidbodyFracture : MonoBehaviour
         GameObject fragment = new GameObject($"{name}_frag{fragmentCount++}");
         fragment.transform.parent = fragmentRoot.transform; fragment.transform.localPosition = float3.zero;
         fragment.transform.localRotation = quaternion.identity; fragment.transform.localScale = transform.localScale;
-        MeshFilter mf = fragment.AddComponent<MeshFilter>(); mf.mesh = remainData.ToMesh();
-        MeshRenderer mr = fragment.AddComponent<MeshRenderer>(); Material[] materials = new Material[mf.mesh.subMeshCount];
-        for (int i = 0; i < materials.Length; i++) materials[i] = mat; mr.materials = materials;
         Rigidbody rb = fragment.AddComponent<Rigidbody>(); rb.mass = mass; rb.useGravity = true;
-        foreach (var mesh in meshes)
+        for (int i = 0; i < meshes.Count; i++)
         {
+            GameObject subFrag = new GameObject($"{name}_subfrag{i}");
+            subFrag.transform.parent = fragment.transform; subFrag.transform.localPosition = float3.zero;
+            subFrag.transform.localRotation = quaternion.identity; subFrag.transform.localScale = new float3(1, 1, 1);
+            MeshFilter mf = subFrag.AddComponent<MeshFilter>(); mf.mesh = meshes[i];
+            MeshRenderer mr = subFrag.AddComponent<MeshRenderer>(); Material[] materials = new Material[mf.mesh.subMeshCount];
+            for (int j = 0; j < materials.Length; j++) materials[j] = mat; mr.materials = materials;
             MeshCollider meshCollider = fragment.AddComponent<MeshCollider>();
-            meshCollider.sharedMesh = mesh; meshCollider.convex = true;
+            meshCollider.sharedMesh = meshes[i]; meshCollider.convex = true;
         }
-        meshes.Clear();
+        meshes.Clear(); bottomMass = 0;
     }
 }

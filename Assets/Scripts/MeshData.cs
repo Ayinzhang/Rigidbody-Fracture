@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using UnityEngine.TestTools;
 
 public enum MeshType { Default = 0, CutFace = 1}
 
@@ -99,36 +99,6 @@ public class MeshData
         triangles[(int)meshType].Add(indexMap[v3]);
     }
 
-    public void AddMeshData(MeshData other)
-    {
-        int vertOffset = vertices.Count, cutOffset = cutVertices.Count;
-        int subMeshCount = triangles.Length; int[] triOffset = new int[subMeshCount];
-        for (int s = 0; s < subMeshCount; s++)
-            triOffset[s] = triangles[s].Count / 3;
-
-        vertices.AddRange(other.vertices); cutVertices.AddRange(other.cutVertices);
-
-        int oldMapLen = indexMap.Length;
-        System.Array.Resize(ref indexMap, oldMapLen + other.indexMap.Length);
-        for (int i = 0; i < other.indexMap.Length; i++)
-            indexMap[oldMapLen + i] = other.indexMap[i] + vertOffset;
-
-        for (int s = 0; s < subMeshCount; s++)
-        {
-            List<int> destTris = triangles[s], srcTris = other.triangles[s];
-            for (int i = 0; i < srcTris.Count; i++)
-                destTris.Add(srcTris[i] + vertOffset);
-        }
-
-        foreach (var e in other.constraints)
-        {
-            int newV1 = e.v1 + cutOffset, newV2 = e.v2 + cutOffset,
-                newT1 = e.t1 >= 0 ? e.t1 + triOffset[0] : -1, newT2 = e.t2 >= 0 ? e.t2 + triOffset[0] : -1;
-            var mergedEdge = new MeshEdge(newV1, newV2, newT1, newT2, e.t1Edge);
-            constraints.Add(mergedEdge);
-        }
-    }
-
     public void WeldCutFaceVertices()
     {
         List<MeshVertex> weldedVerts = new List<MeshVertex>(cutVertices.Count);
@@ -195,5 +165,69 @@ public class MeshData
         mesh.RecalculateBounds();
 
         return mesh;
+    }
+}
+
+public struct Quad
+{
+    public int q1, q2, q3, q4, t1, t2, t1L, t1R, t2L, t2R;
+
+    public Quad(int q1, int q2, int q3, int q4, int t1, int t2, int t1L, int t1R, int t2L, int t2R)
+    {
+        this.q1 = q1; this.q2 = q2; this.q3 = q3; this.q4 = q4; this.t1 = t1; this.t2 = t2; 
+        this.t1L = t1L; this.t1R = t1R; this.t2L = t2L; this.t2R = t2R;
+    }
+}
+
+public interface IBinSortable
+{
+    int bin { get; set; }
+}
+
+public class BinSort
+{
+    public static int GetBinNumber(int i, int j, int n)
+    {
+        return (i % 2 == 0) ? (i * n) + j : (i + 1) * n - j - 1;
+    }
+
+    public static T[] Sort<T>(T[] input, int lastIndex, int binCount) where T : IBinSortable
+    {
+        int[] count = new int[binCount];
+        T[] output = new T[input.Length];
+
+        if (binCount <= 1) return input;
+        if (lastIndex > input.Length) lastIndex = input.Length;
+
+        for (int i = 0; i < lastIndex; i++)
+        {
+            int j = input[i].bin;
+            count[j] += 1;
+        }
+
+        for (int i = 1; i < binCount; i++) count[i] += count[i - 1];
+
+        for (int i = lastIndex - 1; i >= 0; i--)
+        {
+            int j = input[i].bin;
+            count[j] -= 1; output[count[j]] = input[i];
+        }
+
+        for (int i = lastIndex; i < output.Length; i++) output[i] = input[i];
+        return output;
+    }
+
+}
+
+public class TriangulationPoint : IBinSortable
+{
+    public Vector2 coords;
+    public int bin { get; set; }
+    public int index = 0;
+
+    public TriangulationPoint(int index, Vector2 coords)
+    {
+        this.index = index;
+        this.coords = coords;
     }
 }
