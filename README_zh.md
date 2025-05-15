@@ -1,10 +1,10 @@
 
 
-### Rigidbody Fracture
+### 刚体破碎
 
-[中文版](README_zh.md)
+[English Version](README.md)
 
-Physically approximate rigid body fracture by slice cutting, may a lightweight fracture solution
+物理近似的面切法刚体破碎，算是一种轻量级破碎方案
 
 <div align=center>
 <img src="fullslice.gif" width = "50%" height = "50%" />

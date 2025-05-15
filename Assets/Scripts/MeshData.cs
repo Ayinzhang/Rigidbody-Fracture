@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine.TestTools;
 
 public enum MeshType { Default = 0, CutFace = 1}
 
@@ -221,11 +220,11 @@ public class BinSort
 
 public class TriangulationPoint : IBinSortable
 {
-    public Vector2 coords;
+    public float2 coords;
     public int bin { get; set; }
     public int index = 0;
 
-    public TriangulationPoint(int index, Vector2 coords)
+    public TriangulationPoint(int index, float2 coords)
     {
         this.index = index;
         this.coords = coords;

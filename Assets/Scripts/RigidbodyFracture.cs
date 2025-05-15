@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using System.Collections;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(Rigidbody))]
 public class RigidbodyFracture : MonoBehaviour
@@ -22,25 +23,26 @@ public class RigidbodyFracture : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.relativeVelocity.magnitude > collisionVel.x)
+        if (collision.relativeVelocity.magnitude > collisionVel.x) StartCoroutine(FractureAsync(collision));
+    }
+
+    IEnumerator FractureAsync(Collision collision)
+    {
+        point = collision.GetContact(0).point; normal = collision.relativeVelocity.normalized;
+        sliceRate = 0.5f + 0.2f * (math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / (collisionVel.y - collisionVel.x), 0, 1) - 0.5f);
+        while (fractureCount-- > 0)
         {
-            point = collision.GetContact(0).point; normal = collision.relativeVelocity.normalized; gameObject.SetActive(false);
-            sliceRate = 0.3f + 0.2f * math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / 
-                (collisionVel.y - collisionVel.x), 0, 1);
-            while (fractureCount-- > 0)
-            {
-                MeshProjector.GetSlice(meshData, transform, point, normal, sliceRate, sliceTilt, 
-                    out var sliceNormal, out var sliceOrigin, out var isFullSlice);
-                MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topData, out var bottomData);
-                meshes.Add(bottomData.ToMesh());
-                topMass = remainMass * (isFullSlice ? 1 - sliceRate: sliceRate); 
-                bottomMass += remainMass - topMass; remainMass = topMass;
-                if (isFullSlice) CreatFragment(bottomMass);
-                meshData = topData;
-            }
-            if (meshes.Count > 0) CreatFragment(bottomMass);
-            remainData = meshData; meshes.Add(remainData.ToMesh()); CreatFragment(remainMass);
+            MeshProjector.GetSlice(meshData, transform, point, normal, sliceRate, sliceTilt,
+                out var sliceNormal, out var sliceOrigin, out var isFullSlice);
+            MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topData, out var bottomData);
+            meshes.Add(bottomData.ToMesh());
+            topMass = remainMass * (isFullSlice ? 1 - sliceRate : sliceRate);
+            bottomMass += remainMass - topMass; remainMass = topMass;
+            if (isFullSlice) CreatFragment(bottomMass); meshData = topData;
+            yield return null;
         }
+        if (meshes.Count > 0) CreatFragment(bottomMass); gameObject.SetActive(false);
+        remainData = meshData; meshes.Add(remainData.ToMesh()); CreatFragment(remainMass);
     }
 
     void CreatFragment(float mass)
