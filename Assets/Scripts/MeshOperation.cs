@@ -179,7 +179,7 @@ public static class MeshTriangulator
             DiscardTrianglesViolatingConstraints();
         }
 
-        MeshTriangulator.DiscardTrianglesWithSuperTriangleVertices();
+        DiscardTrianglesWithSuperTriangleVertices();
 
         List<int> triangles = new List<int>(3 * triangleCount);
         for (int i = 0; i < triangleCount; i++)
@@ -231,13 +231,13 @@ public static class MeshTriangulator
 
         for (int k = 0; k < N; k++)
         {
-            var point = MeshTriangulator.points[k];
+            var point = points[k];
             int i = (int)(0.99f * n * point.coords.y);
             int j = (int)(0.99f * n * point.coords.x);
             point.bin = BinSort.GetBinNumber(i, j, n);
         }
 
-        return BinSort.Sort<TriangulationPoint>(MeshTriangulator.points, N, binCount);
+        return BinSort.Sort<TriangulationPoint>(points, N, binCount);
     }
 
     static bool ComputeTriangulation()
@@ -260,9 +260,9 @@ public static class MeshTriangulator
                     break;
                 }
 
-                var v1 = MeshTriangulator.points[triangulation[tSearch, V1]].coords;
-                var v2 = MeshTriangulator.points[triangulation[tSearch, V2]].coords;
-                var v3 = MeshTriangulator.points[triangulation[tSearch, V3]].coords;
+                var v1 = points[triangulation[tSearch, V1]].coords;
+                var v2 = points[triangulation[tSearch, V2]].coords;
+                var v3 = points[triangulation[tSearch, V3]].coords;
 
                 if (!MathUtils.IsPointOnRightSideOfLine(v1, v2, point.coords))
                 {
@@ -291,9 +291,9 @@ public static class MeshTriangulator
 
     static void AddSuperTriangle()
     {
-        MeshTriangulator.points[N] = new TriangulationPoint(N, new float2(-100f, -100f));
-        MeshTriangulator.points[N + 1] = new TriangulationPoint(N + 1, new float2(0f, 100f));
-        MeshTriangulator.points[N + 2] = new TriangulationPoint(N + 2, new float2(100f, -100f));
+        points[N] = new TriangulationPoint(N, new float2(-100f, -100f));
+        points[N + 1] = new TriangulationPoint(N + 1, new float2(0f, 100f));
+        points[N + 2] = new TriangulationPoint(N + 2, new float2(100f, -100f));
 
         triangulation[SUPERTRIANGLE, V1] = N;
         triangulation[SUPERTRIANGLE, V2] = N + 1;
