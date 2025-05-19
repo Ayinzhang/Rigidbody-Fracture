@@ -109,7 +109,7 @@ public class MeshData
             bool duplicate = false;
             for (int j = 0; j < weldedVerts.Count; j++)
             {
-                if (Equals(cutVertices[i].position, weldedVerts[j].position))
+                if (math.length(cutVertices[i].position - weldedVerts[j].position) < 1e-5)
                 {
                     indexMap[i] = j;
                     duplicate = true;
