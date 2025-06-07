@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using System;
 
 public enum MeshType { Default = 0, CutFace = 1}
 
@@ -71,6 +72,66 @@ public class MeshData
         if (mesh.subMeshCount >= 2) triangles[1] = new List<int>(mesh.GetTriangles(1));
         else triangles[1] = new List<int>(mesh.triangles.Length / 10);
     }
+
+    public MeshData(List<MeshData> meshDatas)
+    {
+        vertices = new List<MeshVertex>();
+        cutVertices = new List<MeshVertex>();
+        triangles = new List<int>[] { new List<int>(), new List<int>() };
+        constraints = new List<MeshEdge>();
+        indexMap = new int[0];
+
+        Dictionary<float3, int> vertexLookup = new Dictionary<float3, int>(new Float3Comparer());
+
+        foreach (var data in meshDatas)
+        {
+            foreach (var v in data.vertices)
+            {
+                if (!vertexLookup.ContainsKey(v.position))
+                {
+                    vertexLookup[v.position] = vertices.Count;
+                    vertices.Add(v);
+                }
+            }
+
+            foreach (var v in data.cutVertices)
+            {
+                if (!vertexLookup.ContainsKey(v.position))
+                {
+                    vertexLookup[v.position] = vertices.Count;
+                    vertices.Add(v);
+                    cutVertices.Add(v);
+                }
+            }
+
+            for (int sub = 0; sub < 2; sub++)
+            {
+                List<int> tris = data.triangles[sub];
+                for (int i = 0; i < tris.Count; i += 3)
+                {
+                    var v1 = GetGlobalIndex(data, tris[i], vertexLookup);
+                    var v2 = GetGlobalIndex(data, tris[i + 1], vertexLookup);
+                    var v3 = GetGlobalIndex(data, tris[i + 2], vertexLookup);
+                    triangles[sub].Add(v1);
+                    triangles[sub].Add(v2);
+                    triangles[sub].Add(v3);
+                }
+            }
+        }
+    }
+
+    private int GetGlobalIndex(MeshData src, int index, Dictionary<float3, int> vertexLookup)
+    {
+        MeshVertex v = index < src.vertices.Count ? src.vertices[index] : src.cutVertices[index - src.vertices.Count];
+        return vertexLookup[v.position];
+    }
+
+    class Float3Comparer : IEqualityComparer<float3>
+    {
+        public bool Equals(float3 a, float3 b) => math.distancesq(a, b) < 1e-6f;
+        public int GetHashCode(float3 obj) => obj.GetHashCode();
+    }
+
 
     public void AddCutFaceVertex(float3 position, float3 normal, float2 uv)
     {
