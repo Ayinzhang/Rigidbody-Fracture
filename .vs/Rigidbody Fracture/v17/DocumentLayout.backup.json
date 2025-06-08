@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "E:\\Rigidbody Fracture\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\rigidbodyfracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|e:\\rigidbody fracture\\assets\\scripts\\rigidbodyfracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\rigidbodyfracture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\collisionrelay.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\collisionrelay.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|E:\\Rigidbody Fracture\\assets\\scripts\\meshdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\meshdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|e:\\rigidbody fracture\\assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8EDF43B6-5861-6C88-C2A4-59C39285A616}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\meshoperation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,20 +26,31 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "CollisionRelay.cs",
+              "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Scripts\\CollisionRelay.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\CollisionRelay.cs",
+              "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\CollisionRelay.cs",
+              "RelativeToolTip": "Assets\\Scripts\\CollisionRelay.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwIAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-07T16:21:29.654Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "MeshData.cs",
               "DocumentMoniker": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshData.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\MeshData.cs",
               "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshData.cs",
               "RelativeToolTip": "Assets\\Scripts\\MeshData.cs",
-              "ViewState": "AgIAAEUAAAAAAAAAAAAAAFEAAAAeAAAAAAAAAA==",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAACUAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-19T11:34:40.013Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-19T11:34:40.013Z"
             },
             {
               "$type": "Document",
@@ -45,10 +60,9 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\MeshOperation.cs",
               "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\MeshOperation.cs",
               "RelativeToolTip": "Assets\\Scripts\\MeshOperation.cs",
-              "ViewState": "AgIAACoCAAAAAAAAAAAgwDQCAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAAOQDAAAAAAAAAAAAAPcDAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-17T21:03:14.673Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-17T21:03:14.673Z"
             },
             {
               "$type": "Document",
@@ -58,7 +72,7 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\RigidbodyFracture.cs",
               "ToolTip": "E:\\Rigidbody Fracture\\Assets\\Scripts\\RigidbodyFracture.cs",
               "RelativeToolTip": "Assets\\Scripts\\RigidbodyFracture.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAGMAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAADoAAAAAAAAAAAAgwEcAAABMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-17T21:02:57.359Z",
               "EditorCaption": ""

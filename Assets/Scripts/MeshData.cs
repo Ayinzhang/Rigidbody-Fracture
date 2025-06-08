@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using System;
 
 public enum MeshType { Default = 0, CutFace = 1}
 
@@ -36,7 +35,7 @@ public class MeshData
 {
     public List<MeshVertex> vertices, cutVertices;
     public List<int>[] triangles; public List<MeshEdge> constraints;
-    public int[] indexMap;
+    public int[] indexMap; public float mass = 1;
     public int vertexCount { get => vertices.Count + cutVertices.Count; }
     public int triangleCount
     {
@@ -57,12 +56,13 @@ public class MeshData
         indexMap = new int[vertexCount];
     }
 
-    public MeshData(Mesh mesh)
+    public MeshData(Mesh mesh, float mass = 1)
     {
         vertices = new List<MeshVertex>(mesh.vertexCount);
         cutVertices = new List<MeshVertex>(mesh.vertexCount / 10);
         constraints = new List<MeshEdge>();
         indexMap = new int[mesh.vertices.Length];
+        this.mass = mass;
 
         for (int i = 0; i < mesh.vertices.Length; i++) vertices.Add(new MeshVertex(mesh.vertices[i], mesh.normals[i], mesh.uv[i]));
 

@@ -1,6 +1,8 @@
 using UnityEngine;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using System.Numerics;
+using System;
 
 public static class MathUtils
 {
@@ -77,8 +79,8 @@ public static class MeshProjector
     static float2[] points; static float2 minLeft, maxRight, projPoint, center2d;
     static float3 center, worldNormal, tangent, bitangent;
 
-    public static void GetSlice(MeshData meshData, Transform trans, float3 point, float3 normal,
-        float sliceRate, float2 sliceTilt, out float3 sliceNormal, out float3 sliceOrigin, out bool isFullSlice)
+    public static void GetSliceType(MeshData meshData, Transform trans, float3 point, float3 normal,
+        float halfSliceRate, out bool isFullSlice)
     {
         points = new float2[meshData.vertices.Count];
         minLeft = new float2(float.MaxValue, float.MaxValue);
@@ -100,7 +102,32 @@ public static class MeshProjector
         center2d /= meshData.vertices.Count;
         float halfWidth = (maxRight.x - minLeft.x) * 0.5f, halfHeight = (maxRight.y - minLeft.y) * 0.5f;
         float2 normPoint = projPoint - center2d; normPoint.x /= halfWidth; normPoint.y /= halfHeight;
-        isFullSlice = math.length(normPoint) < 0.7f;
+        isFullSlice = math.length(normPoint) < halfSliceRate;
+    }
+
+    public static void GetSlice(MeshData meshData, Transform trans, float3 point, float3 normal,
+        float sliceRate, float2 sliceTilt, out float3 sliceNormal, out float3 sliceOrigin)
+    {
+        points = new float2[meshData.vertices.Count];
+        minLeft = new float2(float.MaxValue, float.MaxValue);
+        maxRight = new float2(float.MinValue, float.MinValue);
+        point = trans.InverseTransformPoint(point); worldNormal = normal;
+        normal = trans.InverseTransformDirection(normal).normalized;
+        tangent = math.normalize(math.cross(normal, new float3(0, 1, 0)));
+        bitangent = math.normalize(math.cross(normal, tangent));
+        for (int i = 0; i < meshData.vertices.Count; i++)
+            center += meshData.vertices[i].position; center /= meshData.vertices.Count;
+        float3 offset = point - center; projPoint = new float2(math.dot(offset, tangent), math.dot(offset, bitangent));
+        for (int i = 0; i < meshData.vertices.Count; i++)
+        {
+            offset = meshData.vertices[i].position - center;
+            points[i] = new float2(math.dot(offset, tangent), math.dot(offset, bitangent)); center2d += points[i];
+            minLeft.x = math.min(minLeft.x, points[i].x); minLeft.y = math.min(minLeft.y, points[i].y);
+            maxRight.x = math.max(maxRight.x, points[i].x); maxRight.y = math.max(maxRight.y, points[i].y);
+        }
+        center2d /= meshData.vertices.Count;
+        float halfWidth = (maxRight.x - minLeft.x) * 0.5f, halfHeight = (maxRight.y - minLeft.y) * 0.5f;
+        float2 normPoint = projPoint - center2d; normPoint.x /= halfWidth; normPoint.y /= halfHeight;
         
         float angle = UnityEngine.Random.Range(0, 2 * math.PI);
         float2 dir = new float2(Mathf.Cos(angle), Mathf.Sin(angle));
@@ -122,11 +149,10 @@ public static class MeshProjector
         float3 baseNormal = math.normalize(math.cross(worldDir, worldNormal));
 
         float tilt = UnityEngine.Random.Range(sliceTilt.x, sliceTilt.y);
-        quaternion q = quaternion.AxisAngle(worldDir, (isFullSlice ? 1 : -1) * math.radians(tilt));
+        quaternion q = quaternion.AxisAngle(worldDir, -math.radians(tilt));
         sliceNormal = math.normalize(math.mul(new float4(math.mul(q, baseNormal), 0), trans.localToWorldMatrix)).xyz;
 
         if (math.dot(point - P0, sliceNormal) < 0) sliceNormal = -sliceNormal;
-        //if(!isFullSlice) sliceNormal = -sliceNormal;
     }
 }
 

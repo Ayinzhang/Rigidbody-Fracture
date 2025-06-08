@@ -7,122 +7,78 @@ using System.Collections.Generic;
 public class RigidbodyFracture : MonoBehaviour
 {
     public int fractureCount = 3, reFractureCount = 2;
-    public float2 collisionVel = new float2(1, 100);
-    public float2 sliceTilt = new float2(15, 30);
+    public float halfSliceRate = 0.7f;
+    public float2 collisionVel = new float2(1, 100), sliceTilt = new float2(5, 15);
     [HideInInspector] public GameObject fragmentRoot;
 
-    Material mat; Rigidbody rb; Collider[] colliders; MeshData meshData; 
-    List<MeshData> pendingHalfSlices = new List<MeshData>();
-    int fragmentCount = 0; bool hasSplit = false;
-    float remainMass; float3 point, normal;
+    Material mat; Rigidbody rb; MeshFilter mf;
+    Collider colObj; MeshData meshData; 
+    int fragmentCount = 0; bool isFracturing; float3 point, normal;
 
     void Start()
     {
-        mat = GetComponent<MeshRenderer>().material;
-        rb = GetComponent<Rigidbody>(); remainMass = rb.mass;
-        meshData = new MeshData(GetComponent<MeshFilter>().mesh);
-        colliders = GetComponentsInChildren<Collider>();
+        mat = GetComponent<MeshRenderer>().material; 
+        rb = GetComponent<Rigidbody>(); mf = GetComponent<MeshFilter>();
+        meshData = new MeshData(mf.mesh, rb.mass);
     }
 
-    void OnCollisionEnter(Collision collision)
+    public void OnCollisionEnter(Collision collision)
     {
-        if (collision.relativeVelocity.magnitude > collisionVel.x)
-            StartCoroutine(FractureAsync(collision));
+        if (!isFracturing && reFractureCount > 0 && collision.relativeVelocity.magnitude > collisionVel.x) 
+            StartCoroutine(Fracture(collision));
     }
 
-    IEnumerator FractureAsync(Collision collision)
+    IEnumerator Fracture(Collision collision)
     {
-        for (int i = 0; i < colliders.Length; i++)  colliders[i].enabled = false;
-
-        point = collision.GetContact(0).point;
-        normal = collision.relativeVelocity.normalized;
+        isFracturing = true;
+        colObj = collision.collider; point = collision.GetContact(0).point; normal = collision.relativeVelocity.normalized;
         float sliceRate = 0.5f + 0.2f * (math.clamp((collision.relativeVelocity.magnitude - collisionVel.x) / (collisionVel.y - collisionVel.x), 0, 1) - 0.5f);
 
-        while (fractureCount-- > 0)
+        MeshProjector.GetSliceType(meshData, transform, point, normal, halfSliceRate, out var isFullSlice);
+
+        if (isFullSlice)
         {
-            MeshProjector.GetSlice(meshData, transform, point, normal, sliceRate, sliceTilt,
-                out var sliceNormal, out var sliceOrigin, out var isFullSlice);
+            Queue<MeshData> meshDatas = new Queue<MeshData>(); meshDatas.Enqueue(meshData);
 
-            if (fractureCount == 0 && !isFullSlice && !hasSplit) { isFullSlice = true; sliceNormal = -sliceNormal; }
-
-            MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topData, out var bottomData);
-
-            if (isFullSlice)
+            while (fragmentCount++ < fractureCount)
             {
-                float bottomMass = remainMass * (1 - sliceRate);
-                CreateSingleFragment(collision.collider, bottomData.ToMesh(), bottomMass);
-                remainMass *= sliceRate;
-                hasSplit = true;
-            }
-            else
-            {
-                pendingHalfSlices.Add(bottomData);
-                remainMass *= sliceRate;
+                meshData = meshDatas.Dequeue();
+                MeshProjector.GetSlice(meshData, transform, point, normal, sliceRate, sliceTilt,
+                    out var sliceNormal, out var sliceOrigin);
+                MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topData, out var bottomData);
+                topData.mass = meshData.mass * sliceRate; bottomData.mass = meshData.mass * (1 - sliceRate);
+                meshDatas.Enqueue(topData); meshDatas.Enqueue(bottomData); yield return null;
             }
 
-            meshData = topData;
-
-            yield return null;
+            while (meshDatas.Count > 0) CreateFragment(meshDatas.Dequeue()); gameObject.SetActive(false);
         }
-
-        if (pendingHalfSlices.Count > 0)
+        else
         {
-            MeshData merged = new MeshData(pendingHalfSlices);
-            CreateMergedFragment(collision.collider, merged, remainMass * 0.5f);
-            remainMass *= 0.5f;
-        }
+            List<MeshData> meshDatas = new List<MeshData>();
 
-        CreateSingleFragment(collision.collider, meshData.ToMesh(), remainMass);
-        gameObject.SetActive(false);
+            while (fragmentCount++ < fractureCount)
+            {
+                MeshProjector.GetSlice(meshData, transform, point, normal, sliceRate, sliceTilt,
+                    out var sliceNormal, out var sliceOrigin);
+                MeshSlicer.Slice(meshData, sliceNormal, sliceOrigin, out var topData, out var bottomData);
+                topData.mass = meshData.mass * sliceRate; bottomData.mass = meshData.mass * (1 - sliceRate);
+                meshData = topData; meshDatas.Add(bottomData); yield return null;
+            }
+
+            CreateFragment(meshData); meshData = new MeshData(meshDatas);
+            mf.mesh = meshData.ToMesh(); rb.mass = meshData.mass; 
+            for (int i = 0; i < gameObject.transform.childCount; i++) 
+                gameObject.transform.GetChild(i).gameObject.SetActive(false);
+            if (TryGetComponent<Collider>(out var col)) col.enabled = false;
+            foreach(var meshData in meshDatas) CreateFragment(meshData, true);
+            fragmentCount = 0; reFractureCount--;
+        }
+        isFracturing = false;
     }
 
-    void CreateSingleFragment(Collider collider, Mesh mesh, float mass)
+    void CreateFragment(MeshData meshData, bool isSelfChild = false)
     {
-        GameObject frag = CreateFragmentRoot(mesh, mass);
-        MeshCollider col = frag.AddComponent<MeshCollider>();
-        Physics.IgnoreCollision(collider, col);
-        col.sharedMesh = mesh; col.convex = true; 
-        if (reFractureCount > 0)
-        {
-            RigidbodyFracture fracScript = frag.AddComponent<RigidbodyFracture>();
-            fracScript.reFractureCount = reFractureCount - 1; fracScript.fragmentRoot = fragmentRoot;
-        }
-    }
-
-    void CreateMergedFragment(Collider collider, MeshData mergedData, float mass)
-    {
-        Mesh mergedMesh = mergedData.ToMesh();
-        GameObject frag = CreateFragmentRoot(mergedMesh, mass);
-
-        int subFragIndex = 0;
-        foreach (MeshData sub in pendingHalfSlices)
-        {
-            Mesh subMesh = sub.ToMesh();
-
-            GameObject colliderChild = new GameObject($"FragCollider{subFragIndex++}");
-            colliderChild.transform.parent = frag.transform;
-            colliderChild.transform.localPosition = Vector3.zero;
-            colliderChild.transform.localRotation = Quaternion.identity;
-            colliderChild.transform.localScale = Vector3.one;
-
-            MeshCollider col = colliderChild.AddComponent<MeshCollider>();
-            Physics.IgnoreCollision(collider, col);
-            col.sharedMesh = subMesh;
-            col.convex = true;
-        }
-
-        if (reFractureCount > 0)
-        {
-            RigidbodyFracture fracScript = frag.AddComponent<RigidbodyFracture>();
-            fracScript.reFractureCount = reFractureCount - 1; fracScript.fragmentRoot = fragmentRoot;
-        }
-
-        pendingHalfSlices.Clear();
-    }
-
-    GameObject CreateFragmentRoot(Mesh mesh, float mass)
-    {
-        if (fragmentRoot == null)
+        if (!isSelfChild && fragmentRoot == null)
         {
             fragmentRoot = new GameObject($"{name}_frags");
             fragmentRoot.transform.SetPositionAndRotation(transform.position, transform.rotation);
@@ -130,24 +86,34 @@ public class RigidbodyFracture : MonoBehaviour
             fragmentRoot.transform.parent = transform.parent;
         }
 
-        GameObject frag = new GameObject($"{name}_frag{fragmentCount++}");
-        frag.transform.parent = fragmentRoot.transform;
-        frag.transform.localPosition = Vector3.zero;
-        frag.transform.localRotation = Quaternion.identity;
-        frag.transform.localScale = transform.localScale;
+        GameObject frag = new GameObject($"{name}_frag{fragmentCount}");
+        frag.transform.parent = isSelfChild ? gameObject.transform: fragmentRoot.transform;
+        frag.transform.position = transform.position;   
+        frag.transform.localScale = isSelfChild ? Vector3.one: transform.localScale;
 
         MeshFilter mf = frag.AddComponent<MeshFilter>();
-        mf.mesh = mesh;
+        mf.mesh = meshData.ToMesh();
+
+        MeshCollider mc = frag.AddComponent<MeshCollider>();
+        mc.sharedMesh = mf.mesh; mc.convex = true;
+
+        if (isSelfChild) { frag.AddComponent<CollisionRelay>(); return; }
+        Physics.IgnoreCollision(colObj, mc);
 
         MeshRenderer mr = frag.AddComponent<MeshRenderer>();
-        Material[] materials = new Material[mesh.subMeshCount];
+        Material[] materials = new Material[mf.mesh.subMeshCount];
         for (int i = 0; i < materials.Length; i++) materials[i] = mat;
         mr.materials = materials;
 
         Rigidbody newRb = frag.AddComponent<Rigidbody>();
-        newRb.mass = mass;
-        newRb.useGravity = true;
+        newRb.mass = meshData.mass; newRb.useGravity = true;
 
-        return frag;
+        if (reFractureCount > 0) 
+        {
+            RigidbodyFracture rbFracture = frag.AddComponent<RigidbodyFracture>();
+            rbFracture.reFractureCount = reFractureCount - 1; rbFracture.halfSliceRate = halfSliceRate; 
+            rbFracture.collisionVel = collisionVel; rbFracture.sliceTilt = sliceTilt; 
+            rbFracture.fragmentRoot = fragmentRoot; rbFracture.meshData = meshData;
+        }
     }
 }
